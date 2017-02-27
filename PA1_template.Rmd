@@ -6,20 +6,78 @@ output:
 ---
 
 
-## Loading and preprocessing the data
+```{r importLibraries, echo = TRUE}
+setwd("~/Desktop/Coursera-GitHub/RepData_PeerAssessment1")
+library(ggplot2)
+```
 
+## Loading and preprocessing the data
+```{r preprocessingData, echo = TRUE}
+activityData <- read.csv("activity.csv")
+activityData$steps <- as.numeric(activityData$steps)
+activityData$date <- as.Date(activityData$date)
+```
 
 
 ## What is mean total number of steps taken per day?
+```{r totalSteps, echo = TRUE}
 
+stepsTotal <- tapply(activityData$steps, activityData$date, sum)
+activityDataTotal <- na.omit(data.frame(unique(activityData$date), stepsTotal))
+names(activityDataTotal) <- c("date", "stepsTotal")
+hist(activityDataTotal$stepsTotal, main = "Histogram of Average Total Steps Taken per Day", xlab = "Total Number of Steps", ylab = "Frequency", col = "blue")
+
+mean(activityDataTotal$stepsTotal)
+median(activityDataTotal$stepsTotal)
+```
 
 
 ## What is the average daily activity pattern?
+```{r intervalPatterns, echo = TRUE}
+stepsMean <- tapply(activityData$steps, activityData$interval, mean, na.rm = TRUE)
+plot(row.names(stepsMean), stepsMean, type = "l", main = "Time Series Plot of Average Steps per Day (5-minute Intervals)", xlab = "Intervals", ylab = "Average Number of Steps", col = "purple")
 
+names(which.max(stepsMean))
+```
 
 
 ## Imputing missing values
+```{r imputing, echo = TRUE}
+sum(is.na(activityData$steps))
 
+intervalSteps <- aggregate(steps ~ interval, activityData, mean)
+for(i in 1:nrow(activityData)){
+  if(is.na(activityData$steps[i])){
+    activityData$steps[i] <- intervalSteps$steps[which(intervalSteps$interval == activityData$interval[i])]
+  }
+}
+
+stepsTotalImputed <- tapply(activityData$steps, activityData$date, sum, na.rm = TRUE)
+activityDataTotalImputed <- data.frame(unique(activityData$date), stepsTotalImputed)
+
+hist(activityDataTotalImputed$stepsTotalImputed, main = "Histogram of Average Total Steps Taken per Day (Imputed)", xlab = "Total Number of Steps", ylab = "Frequency", col = "turquoise")
+
+mean(activityDataTotalImputed$stepsTotalImputed)
+median(activityDataTotalImputed$stepsTotalImputed)
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r dayLevels, echo = TRUE}
+activityData["day"] <- as.character(weekdays(activityData$date))
+activityData["dayLevel"] <- activityData$day
+
+for(i in 1:nrow(activityData)){
+  if(activityData$day[i] %in% c("Saturday", "Sunday")){
+    activityData$dayLevel[i] <- "Weekend"
+  } else {
+    activityData$dayLevel[i] <- "Weekday"
+  }
+}
+
+activityData$dayLevel <- as.factor(activityData$dayLevel)
+activityData["stepsMeanDays"] <- tapply(activityData$steps, activityData$interval, mean, na.rm = TRUE)
+
+g <- qplot(x = interval, y = stepsMeanDays, data = activityData, geom = "line", col = "red") + facet_wrap(~ dayLevel, ncol = 1)  + ggtitle("Average Steps Taken, Averaged Over Weekday Days and Weekend Days") + xlab("Interval") + ylab("Average Number of Steps")
+print(g)
+```
