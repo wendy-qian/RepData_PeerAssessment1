@@ -19,7 +19,7 @@ activityData$date <- as.Date(activityData$date)
 ## What is mean total number of steps taken per day?
 
 ```r
-stepsTotal <- tapply(activityData$steps, activityData$date, sum)
+stepsTotal <- tapply(activityData$steps, activityData$date, sum, na.rm = TRUE)
 activityDataTotal <- na.omit(data.frame(unique(activityData$date), stepsTotal))
 names(activityDataTotal) <- c("date", "stepsTotal")
 hist(activityDataTotal$stepsTotal, main = "Histogram of Average Total Steps Taken per Day", xlab = "Total Number of Steps", ylab = "Frequency", col = "blue")
@@ -32,7 +32,7 @@ mean(activityDataTotal$stepsTotal)
 ```
 
 ```
-## [1] 10766.19
+## [1] 9354.23
 ```
 
 ```r
@@ -40,7 +40,7 @@ median(activityDataTotal$stepsTotal)
 ```
 
 ```
-## [1] 10765
+## [1] 10395
 ```
 
 
@@ -73,6 +73,7 @@ sum(is.na(activityData$steps))
 ```
 
 ```r
+# Getting the mean steps of different intervals and removing the NA values in the steps
 intervalSteps <- aggregate(steps ~ interval, activityData, mean)
 for(i in 1:nrow(activityData)){
   if(is.na(activityData$steps[i])){
@@ -80,6 +81,7 @@ for(i in 1:nrow(activityData)){
   }
 }
 
+# Taking the sum of the steps for the respective dates
 stepsTotalImputed <- tapply(activityData$steps, activityData$date, sum, na.rm = TRUE)
 activityDataTotalImputed <- data.frame(unique(activityData$date), stepsTotalImputed)
 
